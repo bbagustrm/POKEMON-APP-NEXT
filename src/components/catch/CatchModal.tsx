@@ -1,22 +1,21 @@
 "use client";
 
-import React, {useState, useEffect, useRef} from "react";
-import {XIcon, CheckCircleIcon, StarIcon} from "@phosphor-icons/react";
-import {useAppDispatch} from "@/store/hooks";
-import {catchPokemon} from "@/store/slices/collectionSlice";
-import {PokeballIcon} from "@/components/icons/PokeballIcon";
-import {PokemonTypeBadge} from "@/components/pokemon/PokemonTypeBadge";
-import {getPokemonSpriteUrl} from "@/services/pokeApi";
-import type {Pokemon} from "@/types/pokemon";
+import React, { useState, useEffect, useRef } from "react";
+import { XIcon, CheckCircleIcon, StarIcon, SmileyXEyesIcon } from "@phosphor-icons/react";
+import { useAppDispatch } from "@/store/hooks";
+import { catchPokemon } from "@/store/slices/collectionSlice";
+import { PokeballIcon } from "@/components/icons/PokeballIcon";
+import { PokemonTypeBadge } from "@/components/pokemon/PokemonTypeBadge";
+import { getPokemonSpriteUrl } from "@/services/pokeApi";
+import type { Pokemon } from "@/types/pokemon";
 
-type Phase = "throwing" | "shaking" | "success" | "naming";
+type Phase = "throwing" | "shaking" | "failed" | "success" | "naming";
 
 interface CatchModalProps {
     pokemon: Pokemon;
     onClose: () => void;
 }
 
-// Konfeti particle
 interface Particle {
     id: number;
     x: number;
@@ -34,7 +33,7 @@ const CONFETTI_COLORS = [
 ];
 
 function generateParticles(count: number): Particle[] {
-    return Array.from({length: count}, (_, i) => ({
+    return Array.from({ length: count }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
@@ -46,7 +45,7 @@ function generateParticles(count: number): Particle[] {
     }));
 }
 
-function ConfettiParticle({p}: { p: Particle }) {
+function ConfettiParticle({ p }: { p: Particle }) {
     return (
         <div
             className="absolute top-0 pointer-events-none"
@@ -60,7 +59,7 @@ function ConfettiParticle({p}: { p: Particle }) {
                 <StarIcon
                     size={p.size + 4}
                     weight="fill"
-                    style={{color: p.color, transform: `rotate(${p.rotation}deg)`}}
+                    style={{ color: p.color, transform: `rotate(${p.rotation}deg)` }}
                 />
             ) : (
                 <div
@@ -77,7 +76,7 @@ function ConfettiParticle({p}: { p: Particle }) {
     );
 }
 
-export function CatchModal({pokemon, onClose}: CatchModalProps) {
+export function CatchModal({ pokemon, onClose }: CatchModalProps) {
     const dispatch = useAppDispatch();
     const [phase, setPhase] = useState<Phase>("throwing");
     const [nickname, setNickname] = useState("");
@@ -86,7 +85,7 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
     const [showSparkle, setShowSparkle] = useState(false);
     const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-    const {src: spriteUrl} = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
+    const { src: spriteUrl } = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
 
     function addTimer(fn: () => void, ms: number) {
         const t = setTimeout(fn, ms);
@@ -95,13 +94,21 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
     }
 
     useEffect(() => {
+        // Throw → shake → 50/50 result
         addTimer(() => setPhase("shaking"), 800);
         addTimer(() => {
-            setPhase("success");
-            setParticles(generateParticles(40));
-            setShowSparkle(true);
+            const success = Math.random() < 0.5;
+            if (success) {
+                setPhase("success");
+                setParticles(generateParticles(40));
+                setShowSparkle(true);
+                addTimer(() => setPhase("naming"), 800);
+            } else {
+                setPhase("failed");
+                // Tutup modal otomatis setelah 2 detik
+                addTimer(onClose, 2000);
+            }
         }, 2400);
-        addTimer(() => setPhase("naming"), 3200);
 
         return () => timers.current.forEach(clearTimeout);
     }, []);
@@ -127,66 +134,124 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
         if (e.target === e.currentTarget && phase === "naming") onClose();
     }
 
+    // Warna header berdasarkan phase
+    const headerBg = (() => {
+        if (phase === "failed") return "linear-gradient(135deg, #374151 0%, #1f2937 100%)";
+        if (phase === "success" || phase === "naming")
+            return "linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%)";
+        return "linear-gradient(135deg, #E3350D 0%, #c42d0b 100%)";
+    })();
+
     return (
         <>
+            <style>{`
+        @keyframes confetti-fall {
+          0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(420px) rotate(720deg); opacity: 0; }
+        }
+        @keyframes sparkle-pop {
+          0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+          50%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes pokemon-reveal {
+          0%   { transform: scale(0.3) translateY(20px); opacity: 0; filter: brightness(5); }
+          50%  { transform: scale(1.15) translateY(-8px); filter: brightness(1.5); }
+          100% { transform: scale(1) translateY(0); opacity: 1; filter: brightness(1); }
+        }
+        @keyframes glow-pulse {
+          0%, 100% { box-shadow: 0 0 20px 5px rgba(255,203,5,0.4); }
+          50%       { box-shadow: 0 0 40px 15px rgba(255,203,5,0.7); }
+        }
+        @keyframes star-spin {
+          0%   { transform: rotate(0deg) scale(0); opacity: 0; }
+          50%  { transform: rotate(180deg) scale(1.3); opacity: 1; }
+          100% { transform: rotate(360deg) scale(1); opacity: 0.8; }
+        }
+        @keyframes shake-success {
+          0%, 100% { transform: translateX(0); }
+          20%       { transform: translateX(-4px); }
+          40%       { transform: translateX(4px); }
+          60%       { transform: translateX(-3px); }
+          80%       { transform: translateX(3px); }
+        }
+        @keyframes failed-shake {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          15%       { transform: translateX(-8px) rotate(-5deg); }
+          30%       { transform: translateX(8px) rotate(5deg); }
+          45%       { transform: translateX(-6px) rotate(-3deg); }
+          60%       { transform: translateX(6px) rotate(3deg); }
+          75%       { transform: translateX(-3px) rotate(-1deg); }
+        }
+        @keyframes pokemon-flee {
+          0%   { transform: scale(1) translateX(0); opacity: 1; }
+          30%  { transform: scale(1.1) translateX(-10px); opacity: 1; }
+          100% { transform: scale(0.3) translateX(80px); opacity: 0; }
+        }
+        @keyframes failed-pop {
+          0%   { transform: scale(0.8); opacity: 0; }
+          60%  { transform: scale(1.05); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-sparkle-pop    { animation: sparkle-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .animate-pokemon-reveal { animation: pokemon-reveal 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .animate-glow-pulse     { animation: glow-pulse 1.5s ease-in-out infinite; }
+        .animate-star-spin      { animation: star-spin 0.8s ease-out forwards; }
+        .animate-shake-success  { animation: shake-success 0.4s ease-in-out; }
+        .animate-failed-shake   { animation: failed-shake 0.6s ease-in-out; }
+        .animate-pokemon-flee   { animation: pokemon-flee 0.8s ease-in 0.3s forwards; }
+        .animate-failed-pop     { animation: failed-pop 0.4s ease-out forwards; }
+      `}</style>
+
             <div
                 className="fixed inset-0 z-50 flex items-end md:items-center justify-center
                    bg-black/70 backdrop-blur-sm overflow-hidden"
                 onClick={handleBackdropClick}
             >
-                {/* Confetti layer */}
+                {/* Confetti — hanya saat success */}
                 <div className="absolute inset-x-0 top-0 pointer-events-none overflow-hidden h-full">
-                    {particles.map((p) => <ConfettiParticle key={p.id} p={p}/>)}
+                    {particles.map((p) => <ConfettiParticle key={p.id} p={p} />)}
                 </div>
 
                 {/* Modal */}
-                <div className="relative w-full max-w-sm mx-4 mb-4 md:mb-0 rounded-3xl overflow-hidden
-                        shadow-2xl bg-white z-10"
-                     style={{
-                         animation: "sparkle-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards",
-                     }}
+                <div
+                    className="relative w-full max-w-sm mx-4 mb-4 md:mb-0 rounded-3xl overflow-hidden shadow-2xl bg-white z-10"
+                    style={{ animation: "sparkle-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards" }}
                 >
                     {/* ===== HEADER ===== */}
                     <div
                         className="relative overflow-hidden pt-8 pb-16 flex flex-col items-center"
-                        style={{
-                            background: phase === "success" || phase === "naming"
-                                ? "linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%)"
-                                : "linear-gradient(135deg, #E3350D 0%, #c42d0b 100%)",
-                            transition: "background 0.6s ease",
-                        }}
+                        style={{ background: headerBg, transition: "background 0.6s ease" }}
                     >
-                        {/* Tutup */}
                         {phase === "naming" && (
                             <button
                                 onClick={onClose}
-                                className="cursor-pointer absolute top-3 right-3 text-white/50 hover:text-white transition-colors z-10"
+                                className="absolute top-3 right-3 text-white/50 hover:text-white transition-colors z-10"
                             >
-                                <XIcon size={22} weight="bold"/>
+                                <XIcon size={22} weight="bold" />
                             </button>
                         )}
 
-                        {/* Decorative circles */}
-                        <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full opacity-10 bg-white"/>
-                        <div className="absolute -left-4 -bottom-4 w-24 h-24 rounded-full opacity-10 bg-white"/>
+                        <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full opacity-10 bg-white" />
+                        <div className="absolute -left-4 -bottom-4 w-24 h-24 rounded-full opacity-10 bg-white" />
 
-                        {/* Sparkle stars di success */}
+                        {/* Sparkle stars — hanya success */}
                         {showSparkle && (
                             <>
                                 {[
-                                    {top: "15%", left: "12%", size: 20, delay: "0s"},
-                                    {top: "20%", right: "10%", size: 16, delay: "0.15s"},
-                                    {top: "55%", left: "8%", size: 14, delay: "0.25s"},
-                                    {top: "60%", right: "8%", size: 18, delay: "0.1s"},
-                                    {top: "35%", left: "20%", size: 12, delay: "0.3s"},
-                                    {top: "40%", right: "18%", size: 22, delay: "0.05s"},
+                                    { top: "15%", left: "12%",  size: 20, delay: "0s" },
+                                    { top: "20%", right: "10%", size: 16, delay: "0.15s" },
+                                    { top: "55%", left: "8%",   size: 14, delay: "0.25s" },
+                                    { top: "60%", right: "8%",  size: 18, delay: "0.1s" },
+                                    { top: "35%", left: "20%",  size: 12, delay: "0.3s" },
+                                    { top: "40%", right: "18%", size: 22, delay: "0.05s" },
                                 ].map((s, i) => (
                                     <div
                                         key={i}
                                         className="absolute pointer-events-none"
-                                        style={{...s, animation: `star-spin 0.8s ease-out ${s.delay} forwards`}}
+                                        style={{ ...s, animation: `star-spin 0.8s ease-out ${s.delay} forwards` }}
                                     >
-                                        <StarIcon size={s.size} weight="fill" style={{color: "#FFCB05"}}/>
+                                        <StarIcon size={s.size} weight="fill" style={{ color: "#FFCB05" }} />
                                     </div>
                                 ))}
                             </>
@@ -196,7 +261,7 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                         {phase === "throwing" && (
                             <div className="flex flex-col items-center gap-4">
                                 <div className="animate-bounce">
-                                    <PokeballIcon size={72} color="white"/>
+                                    <PokeballIcon size={72} color="white" />
                                 </div>
                                 <p className="text-white/80 text-sm font-display font-medium animate-pulse">
                                     Melempar Pokeball...
@@ -208,7 +273,7 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                         {phase === "shaking" && (
                             <div className="flex flex-col items-center gap-4">
                                 <div className="animate-pokeball-shake">
-                                    <PokeballIcon size={72} color="white"/>
+                                    <PokeballIcon size={72} color="white" />
                                 </div>
                                 <p className="text-white/80 text-sm font-display font-medium animate-pulse">
                                     Menangkap...
@@ -216,17 +281,52 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                             </div>
                         )}
 
-                        {/* Phase: success — Pokemon reveal dengan efek dramatis */}
+                        {/* Phase: FAILED — Pokemon kabur */}
+                        {phase === "failed" && (
+                            <div className="flex flex-col items-center gap-3 animate-failed-pop">
+                                <div className="relative">
+                                    {/* Pokeball meledak */}
+                                    <div className="animate-failed-shake">
+                                        <PokeballIcon size={56} color="#9ca3af" />
+                                    </div>
+                                    {/* Pokemon flee */}
+                                    <div
+                                        className="absolute -right-12 -top-4 animate-pokemon-flee"
+                                        style={{ imageRendering: "pixelated" }}
+                                    >
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={spriteUrl}
+                                            alt={pokemon.name}
+                                            width={60}
+                                            height={60}
+                                            className="object-contain opacity-80"
+                                            style={{ imageRendering: pokemon.id <= 649 ? "pixelated" : "auto" }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <SmileyXEyesIcon size={22} weight="fill" className="text-gray-400" />
+                                    <p className="text-gray-300 font-display font-bold text-base">
+                                        Oh no! It broke free!
+                                    </p>
+                                </div>
+                                <p className="text-gray-500 text-xs font-display animate-pulse">
+                                    Menutup otomatis...
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Phase: success */}
                         {phase === "success" && (
                             <div className="flex flex-col items-center gap-2 animate-sparkle-pop">
-                                {/* Glow ring */}
                                 <div
                                     className="rounded-full p-3 animate-glow-pulse"
-                                    style={{background: "rgba(255,203,5,0.15)"}}
+                                    style={{ background: "rgba(255,203,5,0.15)" }}
                                 >
                                     <div
                                         className="rounded-full p-2"
-                                        style={{background: "rgba(255,203,5,0.25)"}}
+                                        style={{ background: "rgba(255,203,5,0.25)" }}
                                     >
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
@@ -235,7 +335,7 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                                             width={110}
                                             height={110}
                                             className="object-contain animate-pokemon-reveal"
-                                            style={{imageRendering: pokemon.id <= 649 ? "pixelated" : "auto"}}
+                                            style={{ imageRendering: pokemon.id <= 649 ? "pixelated" : "auto" }}
                                         />
                                     </div>
                                 </div>
@@ -245,16 +345,16 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                             </div>
                         )}
 
-                        {/* Phase: naming — tetap tampilkan Pokemon dengan glow */}
+                        {/* Phase: naming */}
                         {phase === "naming" && (
                             <div className="flex flex-col items-center">
                                 <div
                                     className="rounded-full p-3"
-                                    style={{background: "rgba(255,203,5,0.12)"}}
+                                    style={{ background: "rgba(255,203,5,0.12)" }}
                                 >
                                     <div
                                         className="rounded-full p-2"
-                                        style={{background: "rgba(255,203,5,0.2)"}}
+                                        style={{ background: "rgba(255,203,5,0.2)" }}
                                     >
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
@@ -263,7 +363,7 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                                             width={100}
                                             height={100}
                                             className="object-contain"
-                                            style={{imageRendering: pokemon.id <= 649 ? "pixelated" : "auto"}}
+                                            style={{ imageRendering: pokemon.id <= 649 ? "pixelated" : "auto" }}
                                         />
                                     </div>
                                 </div>
@@ -273,7 +373,6 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
 
                     {/* ===== BODY ===== */}
                     <div className="px-6 pt-4 pb-6 -mt-6 relative bg-white rounded-t-3xl">
-                        {/* Pokemon info */}
                         <div className="text-center mb-4">
                             <p className="text-xs text-gray-400 font-display font-medium mb-1">
                                 #{String(pokemon.id).padStart(3, "0")}
@@ -283,7 +382,7 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                             </h2>
                             <div className="flex justify-center gap-2 mt-2">
                                 {pokemon.types.map((t) => (
-                                    <PokemonTypeBadge key={t.type.name} type={t.type.name}/>
+                                    <PokemonTypeBadge key={t.type.name} type={t.type.name} />
                                 ))}
                             </div>
                         </div>
@@ -320,12 +419,12 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                                 >
                                     {saved ? (
                                         <>
-                                            <CheckCircleIcon weight="fill" size={18}/>
+                                            <CheckCircleIcon weight="fill" size={18} />
                                             Tersimpan!
                                         </>
                                     ) : (
                                         <>
-                                            <PokeballIcon size={18} color="white"/>
+                                            <PokeballIcon size={18} color="white" />
                                             Tambah ke Koleksi
                                         </>
                                     )}
@@ -333,9 +432,24 @@ export function CatchModal({pokemon, onClose}: CatchModalProps) {
                             </div>
                         )}
 
-                        {/* Skeleton button saat loading phases */}
-                        {phase !== "naming" && (
-                            <div className="h-12 rounded-xl bg-gray-100 animate-pulse mt-2"/>
+                        {/* Skeleton / loading phases */}
+                        {(phase === "throwing" || phase === "shaking") && (
+                            <div className="h-12 rounded-xl bg-gray-100 animate-pulse mt-2" />
+                        )}
+
+                        {/* Failed state body */}
+                        {phase === "failed" && (
+                            <div className="text-center py-2">
+                                <p className="text-sm text-gray-500 font-display">
+                  <span className="font-semibold capitalize text-[#1A1A2E]">
+                    {pokemon.name}
+                  </span>{" "}
+                                    berhasil melarikan diri!
+                                </p>
+                                <p className="text-xs text-gray-400 font-display mt-1">
+                                    Coba lagi untuk menangkapnya.
+                                </p>
+                            </div>
                         )}
                     </div>
                 </div>

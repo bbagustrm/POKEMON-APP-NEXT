@@ -1,34 +1,37 @@
 import type { Metadata } from "next";
-import { Inter, Fredoka } from "next/font/google";
+import { Pixelify_Sans, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+const pixelify = Pixelify_Sans({
+    subsets: ["latin"],
+    variable: "--font-body",
 });
 
-const fredoka = Fredoka({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-fredoka",
+const pressStart = Press_Start_2P({
+    subsets: ["latin"],
+    weight: "400",
+    variable: "--font-display",
 });
 
 export const metadata: Metadata = {
-  title: "PokéDex App",
-  description: "Catch and collect your favorite Pokemon!",
+    title: "PokéDex App",
+    description: "Catch and collect your favorite Pokemon!",
 };
 
 export default function RootLayout({
-                                     children,
+                                       children,
                                    }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  return (
-      <html lang="en" className={`${inter.variable} ${fredoka.variable}`}>
-      <body className="pokeball-bg min-h-screen">
-      <Providers>{children}</Providers>
-      </body>
-      </html>
-  );
+    return (
+        <html
+            lang="en"
+            className={`${pixelify.variable} ${pressStart.variable}`}
+        >
+        <body className="pokeball-bg min-h-screen">
+        <Providers>{children}</Providers>
+        </body>
+        </html>
+    );
 }
