@@ -13,10 +13,11 @@ import type {Pokemon} from "@/types/pokemon";
 import {getTypeColor} from "@/lib/typeColors";
 
 interface PokemonCardProps {
-    pokemon: Pokemon;
+    pokemon: Pokemon,
+    onCatch?: (pokemon: Pokemon) => void
 }
 
-export function PokemonCard({pokemon}: PokemonCardProps) {
+export function PokemonCard({pokemon, onCatch}: PokemonCardProps) {
     const router = useRouter();
     const collection = useAppSelector((s) => s.collection.pokemon);
     const isCaught = collection.some((p) => p.id === pokemon.id);
