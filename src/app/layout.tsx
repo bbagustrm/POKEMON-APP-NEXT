@@ -15,8 +15,34 @@ const pressStart = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-    title: "PokéDex App",
-    description: "Catch and collect your favorite Pokemon!",
+    metadataBase: new URL("https://pokedex-app.vercel.app"),
+    title: {
+        default: "PokéDex App — Catch & Collect Pokémon",
+        template: "%s | PokéDex App",
+    },
+    description:
+        "Browse, catch, and collect your favorite Pokémon in this interactive Pokédex application. Explore stats, evolutions, and more!",
+    keywords: [
+        "Pokémon",
+        "Pokédex",
+        "catch Pokémon",
+        "Pokémon collection",
+        "Pokémon stats",
+        "Pokémon evolution",
+    ],
+    authors: [{ name: "PokéDex App" }],
+    robots: {
+        index: true,
+        follow: true,
+    },
+    openGraph: {
+        type: "website",
+        locale: "en_US",
+        siteName: "PokéDex App",
+        title: "PokéDex App — Catch & Collect Pokémon",
+        description:
+            "Browse, catch, and collect your favorite Pokémon in this interactive Pokédex application.",
+    },
 };
 
 export default function RootLayout({

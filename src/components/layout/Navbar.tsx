@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { BookOpenIcon, BagIcon } from "@phosphor-icons/react";
 import { useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
+import { PokeballIcon } from "@/components/icons/PokeballIcon";
 
 export function Navbar() {
     const pathname = usePathname();
     const count = useAppSelector((s) => s.collection.pokemon.length);
 
-    // Hindari hydration mismatch: badge hanya render setelah client mount
+    // Avoid hydration mismatch: badge only renders after client mount
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
 
@@ -24,9 +25,10 @@ export function Navbar() {
             {/* Top bar — desktop */}
             <header className="hidden md:flex items-center justify-between px-6 py-3
                          bg-[#E3350D] shadow-md sticky top-0 z-40">
-        <span className="text-white font-display font-bold text-xl tracking-wide">
-          🎮 PokéDex
-        </span>
+                <Link href="/" className="flex items-center gap-2 text-white font-display font-bold text-xl tracking-wide">
+                    <PokeballIcon size={24} color="white" />
+                    PokéDex
+                </Link>
                 <nav className="flex gap-2">
                     {links.map(({ href, label, icon: Icon, badge }) => {
                         const active = pathname === href;
@@ -53,6 +55,15 @@ export function Navbar() {
                         );
                     })}
                 </nav>
+            </header>
+
+            {/* Top bar — mobile (logo only) */}
+            <header className="md:hidden flex items-center justify-center px-4 py-3
+                         bg-[#E3350D] shadow-md sticky top-0 z-40">
+                <Link href="/" className="flex items-center gap-2 text-white font-display font-bold text-lg tracking-wide">
+                    <PokeballIcon size={20} color="white" />
+                    PokéDex
+                </Link>
             </header>
 
             {/* Bottom nav — mobile */}

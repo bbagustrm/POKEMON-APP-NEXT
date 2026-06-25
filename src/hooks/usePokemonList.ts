@@ -5,11 +5,11 @@ import { fetchPokemonList, fetchPokemonDetail, extractPokemonIdFromUrl } from "@
 import { POKEMON_LIST_LIMIT } from "@/constants";
 import type { Pokemon } from "@/types/pokemon";
 
-export function usePokemonList() {
-    const [pokemons, setPokemons] = useState<Pokemon[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export function usePokemonList(initialData?: Pokemon[]) {
+    const [pokemons, setPokemons] = useState<Pokemon[]>(initialData ?? []);
+    const [isLoading, setIsLoading] = useState(!initialData || initialData.length === 0);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
-    const [offset, setOffset] = useState(0);
+    const [offset, setOffset] = useState(initialData ? initialData.length : 0);
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -31,16 +31,19 @@ export function usePokemonList() {
             setHasMore(listData.next !== null);
             setError(null);
         } catch {
-            setError("Gagal memuat data Pokemon. Coba lagi.");
+            setError("Failed to load Pokémon data. Try again.");
         } finally {
             setIsLoading(false);
             setIsFetchingMore(false);
         }
     }, []);
 
+    // Only fetch on mount if no initial data was provided
     useEffect(() => {
-        loadPokemons(0, false);
-    }, [loadPokemons]);
+        if (!initialData || initialData.length === 0) {
+            loadPokemons(0, false);
+        }
+    }, [loadPokemons, initialData]);
 
     const loadMore = useCallback(() => {
         if (!isFetchingMore && hasMore) {

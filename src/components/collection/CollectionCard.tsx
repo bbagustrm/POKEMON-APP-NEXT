@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { PokemonTypeBadge } from "@/components/pokemon/PokemonTypeBadge";
 import { ReleaseDialog } from "./ReleaseDialog";
@@ -21,10 +22,10 @@ export function CollectionCard({ pokemon }: CollectionCardProps) {
 
     const primaryType = pokemon.types[0]?.type.name ?? "normal";
     const colors = getTypeColor(primaryType);
-    const { src: spriteUrl } = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
+    const { src: spriteUrl, isAnimated } = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
     const paddedId = String(pokemon.id).padStart(3, "0");
 
-    const caughtDate = new Intl.DateTimeFormat("id-ID", {
+    const caughtDate = new Intl.DateTimeFormat("en-US", {
         day: "numeric",
         month: "short",
         year: "numeric",
@@ -72,14 +73,15 @@ export function CollectionCard({ pokemon }: CollectionCardProps) {
                     )}
 
                     <div className="flex justify-center my-2 h-24 items-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                             src={spriteUrl}
                             alt={pokemon.nickname}
                             width={96}
                             height={96}
                             className="object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-200"
-                            style={{ imageRendering: pokemon.id <= 649 ? "pixelated" : "auto" }}
+                            style={{ imageRendering: pokemon.id <= 649 ? "pixelated" : "auto", width: "auto", height: "auto" }}
+                            unoptimized={isAnimated}
+                            loading="lazy"
                         />
                     </div>
 
@@ -98,7 +100,7 @@ export function CollectionCard({ pokemon }: CollectionCardProps) {
                             style={{ borderColor: colors.border, color: colors.text }}
                         >
                             <ArrowSquareOutIcon size={14} weight="bold" />
-                            Lepaskan
+                            Release
                         </button>
                     </div>
                 </div>

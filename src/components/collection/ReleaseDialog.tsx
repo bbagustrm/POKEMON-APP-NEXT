@@ -53,7 +53,7 @@ export function ReleaseDialog({ pokemon, onConfirm, onCancel }: ReleaseDialogPro
                     <div className="flex items-center justify-center gap-2 mb-1">
                         <WarningIcon size={18} weight="fill" className="text-amber-500" />
                         <p className="text-xs font-semibold font-display text-amber-600 uppercase tracking-wide">
-                            Lepaskan Pokemon
+                            Release Pokémon
                         </p>
                     </div>
 
@@ -67,11 +67,11 @@ export function ReleaseDialog({ pokemon, onConfirm, onCancel }: ReleaseDialogPro
                     )}
 
                     <p className="text-center text-sm text-gray-500 mb-5 leading-relaxed">
-                        Apakah kamu yakin ingin melepaskan{" "}
+                        Are you sure you want to release{" "}
                         <span className="font-semibold capitalize text-[#1A1A2E]">
               {pokemon.nickname}
             </span>
-                        ? Pokemon ini akan pergi selamanya.
+                        ? This Pokémon will be gone forever.
                     </p>
 
                     <div className="flex gap-3">
@@ -80,14 +80,14 @@ export function ReleaseDialog({ pokemon, onConfirm, onCancel }: ReleaseDialogPro
                             className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold
                          font-display text-gray-600 hover:bg-gray-50 active:scale-95 transition-all"
                         >
-                            Batal
+                            Cancel
                         </button>
                         <button
                             onClick={onConfirm}
                             className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white
                          text-sm font-semibold font-display active:scale-95 transition-all shadow-sm"
                         >
-                            Ya, Lepaskan
+                            Yes, Release
                         </button>
                     </div>
                 </div>

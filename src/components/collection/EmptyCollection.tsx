@@ -14,10 +14,10 @@ export function EmptyCollection() {
             </div>
 
             <h2 className="font-display font-bold text-xl text-[#1A1A2E] mb-2">
-                Koleksi Masih Kosong
+                Collection Empty
             </h2>
             <p className="text-sm text-gray-400 font-display leading-relaxed mb-6 max-w-xs">
-                Kamu belum menangkap Pokemon apapun. Yuk mulai petualanganmu!
+                You haven&apos;t caught any Pokémon yet. Start your adventure!
             </p>
 
             <button
@@ -27,7 +27,7 @@ export function EmptyCollection() {
                    hover:bg-[#c42d0b] active:scale-95 transition-all shadow-sm"
             >
                 <PokeballIcon size={16} color="white" />
-                Mulai Menangkap Pokemon
+                Start Catching Pokémon
             </button>
         </div>
     );

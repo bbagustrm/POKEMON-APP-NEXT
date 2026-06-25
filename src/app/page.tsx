@@ -1,50 +1,30 @@
-"use client";
-
-import { useState } from "react";
-import { usePokemonList } from "@/hooks/usePokemonList";
-import { PokemonGrid } from "@/components/pokemon/PokemonGrid";
-import { CatchModal } from "@/components/catch/CatchModal";
-import { Navbar } from "@/components/layout/Navbar";
+import type { Metadata } from "next";
+import { HomeClient } from "@/components/home/HomeClient";
+import { fetchPokemonList, fetchPokemonDetail, extractPokemonIdFromUrl } from "@/services/pokeApi";
+import { POKEMON_LIST_LIMIT } from "@/constants";
 import type { Pokemon } from "@/types/pokemon";
 
-export default function HomePage() {
-    const { pokemons, isLoading, isFetchingMore, hasMore, error, loadMore } =
-        usePokemonList();
+export const metadata: Metadata = {
+    title: "Pokédex",
+    description:
+        "Browse and catch Pokémon! Explore detailed stats, types, evolutions, and build your collection.",
+};
 
-    const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
+export default async function HomePage() {
+    let initialPokemons: Pokemon[] = [];
 
-    return (
-        <div className="min-h-screen pb-24 md:pb-0">
-            <Navbar />
+    try {
+        const listData = await fetchPokemonList(0, POKEMON_LIST_LIMIT);
+        initialPokemons = await Promise.all(
+            listData.results.map((p) => {
+                const id = extractPokemonIdFromUrl(p.url);
+                return fetchPokemonDetail(id);
+            })
+        );
+    } catch {
+        // If server-side fetch fails, HomeClient will handle client-side fetch
+        initialPokemons = [];
+    }
 
-            {/* Header */}
-            <div className="px-4 pt-6 pb-4">
-                <h1 className="font-display font-bold text-3xl text-[#1A1A2E] leading-tight">
-                    Pokédex
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                    {pokemons.length > 0
-                        ? `${pokemons.length} Pokemon dimuat`
-                        : "Memuat Pokemon..."}
-                </p>
-            </div>
-
-            <PokemonGrid
-                pokemons={pokemons}
-                isLoading={isLoading}
-                isFetchingMore={isFetchingMore}
-                hasMore={hasMore}
-                error={error}
-                onCatch={setSelectedPokemon}
-                onLoadMore={loadMore}
-            />
-
-            {selectedPokemon && (
-                <CatchModal
-                    pokemon={selectedPokemon}
-                    onClose={() => setSelectedPokemon(null)}
-                />
-            )}
-        </div>
-    );
+    return <HomeClient initialPokemons={initialPokemons} />;
 }

@@ -35,9 +35,9 @@ export default function CollectionPage() {
     }, [collection, search, sortKey, sortAsc]);
 
     const sortOptions: { key: SortKey; label: string }[] = [
-        { key: "caught", label: "Ditangkap" },
-        { key: "name", label: "Nama" },
-        { key: "id", label: "No. Pokedex" },
+        { key: "caught", label: "Caught" },
+        { key: "name", label: "Name" },
+        { key: "id", label: "Pokédex No." },
     ];
 
     return (
@@ -49,13 +49,13 @@ export default function CollectionPage() {
                 <div className="flex items-center gap-3 mb-1">
                     <PokeballIcon size={28} color="#E3350D" />
                     <h1 className="font-display font-bold text-3xl text-[#1A1A2E]">
-                        Koleksiku
+                        My Collection
                     </h1>
                 </div>
                 <p className="text-sm text-gray-500 ml-1">
                     {collection.length === 0
-                        ? "Belum ada Pokemon"
-                        : `${collection.length} Pokemon tertangkap`}
+                        ? "No Pokémon yet"
+                        : `${collection.length} Pokémon caught`}
                 </p>
             </div>
 
@@ -75,7 +75,7 @@ export default function CollectionPage() {
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Cari nama, tipe..."
+                                placeholder="Search name, type..."
                                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200
                            bg-white text-sm font-display text-[#1A1A2E] placeholder-gray-300
                            focus:outline-none focus:ring-2 focus:ring-[#E3350D]/20 focus:border-[#E3350D]
@@ -85,7 +85,7 @@ export default function CollectionPage() {
 
                         {/* Sort */}
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400 font-display shrink-0">Urutkan:</span>
+                            <span className="text-xs text-gray-400 font-display shrink-0">Sort by:</span>
                             <div className="flex gap-1.5 flex-wrap">
                                 {sortOptions.map(({ key, label }) => (
                                     <button
@@ -117,7 +117,7 @@ export default function CollectionPage() {
                     {filtered.length === 0 ? (
                         <div className="text-center py-16">
                             <p className="text-gray-400 font-display text-sm">
-                                Tidak ada Pokemon yang cocok dengan &quot;{search}&quot;
+                                No Pokémon matching &quot;{search}&quot;
                             </p>
                         </div>
                     ) : (

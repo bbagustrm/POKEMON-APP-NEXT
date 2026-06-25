@@ -76,7 +76,7 @@ export function PokemonGrid({
                      text-white text-sm font-semibold font-display hover:bg-red-600 transition"
                 >
                     <ArrowClockwiseIcon size={16} weight="bold" />
-                    Coba lagi
+                    Try again
                 </button>
             </div>
         );
@@ -98,7 +98,7 @@ export function PokemonGrid({
 
             {!hasMore && pokemons.length > 0 && (
                 <p className="text-center text-sm text-gray-400 font-display py-8">
-                    Semua Pokemon sudah dimuat!
+                    All Pokémon loaded!
                 </p>
             )}
         </>

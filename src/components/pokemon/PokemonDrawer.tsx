@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { XIcon, LightningIcon, BarbellIcon, ArrowRightIcon, StarIcon, DropIcon, LeafIcon } from "@phosphor-icons/react";
 import { PokemonTypeBadge } from "./PokemonTypeBadge";
 import { PokeballIcon } from "@/components/icons/PokeballIcon";
@@ -68,15 +69,14 @@ function EvolutionCard({ id, name, trigger, minLevel, item }: {
     return (
         <div className="flex flex-col items-center gap-1">
             <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                     src={id <= 649 ? spriteUrl : fallback}
                     alt={name}
                     width={56}
                     height={56}
                     className="object-contain"
-                    style={{ imageRendering: id <= 649 ? "pixelated" : "auto" }}
-                    onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
+                    style={{ imageRendering: id <= 649 ? "pixelated" : "auto", width: "auto", height: "auto" }}
+                    unoptimized={id <= 649}
                 />
             </div>
             <span className="text-xs font-bold font-display capitalize text-center text-gray-700 leading-tight">
@@ -121,7 +121,7 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
 
     const primaryType = pokemon.types[0]?.type.name ?? "normal";
     const colors = getTypeColor(primaryType);
-    const { src: spriteUrl } = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
+    const { src: spriteUrl, isAnimated } = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
     const paddedId = String(pokemon.id).padStart(3, "0");
     const totalStats = pokemon.stats.reduce((a, s) => a + s.base_stat, 0);
 
@@ -184,14 +184,14 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
 
                     {/* Pokemon image */}
                     <div className="flex justify-center mb-3 mt-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                             src={spriteUrl}
                             alt={pokemon.name}
                             width={140}
                             height={140}
                             className="object-contain drop-shadow-xl"
-                            style={{ imageRendering: pokemon.id <= 649 ? "pixelated" : "auto" }}
+                            style={{ imageRendering: pokemon.id <= 649 ? "pixelated" : "auto", width: "auto", height: "auto" }}
+                            unoptimized={isAnimated}
                         />
                     </div>
 

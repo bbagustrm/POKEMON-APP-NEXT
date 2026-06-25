@@ -1,7 +1,8 @@
 "use client";
 
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {useRouter} from "next/navigation";
+import Image from "next/image";
 import {CheckCircleIcon, BagIcon} from "@phosphor-icons/react";
 import {PokeballIcon} from "@/components/icons/PokeballIcon";
 import {PokemonTypeBadge} from "./PokemonTypeBadge";
@@ -20,13 +21,18 @@ interface PokemonCardProps {
 export function PokemonCard({pokemon, onCatch}: PokemonCardProps) {
     const router = useRouter();
     const collection = useAppSelector((s) => s.collection.pokemon);
-    const isCaught = collection.some((p) => p.id === pokemon.id);
     const [showCatchModal, setShowCatchModal] = useState(false);
     const [showDrawer, setShowDrawer] = useState(false);
 
+    // Defer isCaught check until after mount to avoid hydration mismatch
+    // (server has no localStorage, so collection is [] on SSR)
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+    const isCaught = mounted && collection.some((p) => p.id === pokemon.id);
+
     const primaryType = pokemon.types[0]?.type.name ?? "normal";
     const colors = getTypeColor(primaryType);
-    const {src: spriteUrl} = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
+    const {src: spriteUrl, isAnimated} = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
     const paddedId = String(pokemon.id).padStart(3, "0");
 
     return (
@@ -62,18 +68,19 @@ export function PokemonCard({pokemon, onCatch}: PokemonCardProps) {
                     </h3>
 
                     <div className="flex justify-center mt-2 mb-3 h-28 items-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                             src={spriteUrl}
                             alt={pokemon.name}
                             width={112}
                             height={112}
-                            className="object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-200"
+                            className="w-28 h-28 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-200"
                             style={{imageRendering: pokemon.id <= 649 ? "pixelated" : "auto"}}
+                            unoptimized={isAnimated}
+                            loading="lazy"
                         />
                     </div>
 
-                    {/* Buttons — stop propagation agar klik button tidak buka drawer */}
+                    {/* Buttons — stop propagation so button click doesn't open drawer */}
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                         {isCaught ? (
                             <>
