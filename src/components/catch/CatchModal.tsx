@@ -125,6 +125,17 @@ export function CatchModal({ pokemon, onClose }: CatchModalProps) {
                 types: pokemon.types,
                 sprites: pokemon.sprites,
                 caughtAt: new Date().toISOString(),
+                stats: [],
+                height: 0,
+                weight: 0,
+                base_experience: 0,
+                abilities: [],
+                moves: [],
+                held_items: [],
+                species: {
+                    name: "",
+                    url: ""
+                }
             })
         );
         setSaved(true);
