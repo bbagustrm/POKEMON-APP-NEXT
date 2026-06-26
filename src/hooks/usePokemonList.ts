@@ -2,23 +2,26 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { fetchPokemonList, fetchPokemonDetail, extractPokemonIdFromUrl } from "@/services/pokeApi";
-import { POKEMON_LIST_LIMIT } from "@/constants";
 import type { Pokemon } from "@/types/pokemon";
+
+const LIMIT = 16;
 
 export function usePokemonList(initialData?: Pokemon[]) {
     const [pokemons, setPokemons] = useState<Pokemon[]>(initialData ?? []);
     const [isLoading, setIsLoading] = useState(!initialData || initialData.length === 0);
-    const [isFetchingMore, setIsFetchingMore] = useState(false);
-    const [offset, setOffset] = useState(initialData ? initialData.length : 0);
-    const [hasMore, setHasMore] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
     const [error, setError] = useState<string | null>(null);
 
-    const loadPokemons = useCallback(async (currentOffset: number, append: boolean) => {
-        try {
-            if (append) setIsFetchingMore(true);
-            else setIsLoading(true);
+    const totalPages = totalCount > 0 ? Math.ceil(totalCount / LIMIT) : 0;
 
-            const listData = await fetchPokemonList(currentOffset, POKEMON_LIST_LIMIT);
+    const loadPage = useCallback(async (page: number) => {
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            const offset = (page - 1) * LIMIT;
+            const listData = await fetchPokemonList(offset, LIMIT);
 
             const details = await Promise.all(
                 listData.results.map((p) => {
@@ -27,31 +30,44 @@ export function usePokemonList(initialData?: Pokemon[]) {
                 })
             );
 
-            setPokemons((prev) => append ? [...prev, ...details] : details);
-            setHasMore(listData.next !== null);
-            setError(null);
+            setPokemons(details);
+            setTotalCount(listData.count);
+            setCurrentPage(page);
         } catch {
             setError("Failed to load Pokémon data. Try again.");
         } finally {
             setIsLoading(false);
-            setIsFetchingMore(false);
         }
     }, []);
 
-    // Only fetch on mount if no initial data was provided
+    // On mount: if no initialData, fetch page 1 fully.
+    // If initialData exists (SSR), just fetch the total count for pagination.
     useEffect(() => {
         if (!initialData || initialData.length === 0) {
-            loadPokemons(0, false);
+            loadPage(1);
+        } else {
+            fetchPokemonList(0, 1)
+                .then((res) => setTotalCount(res.count))
+                .catch(() => {});
         }
-    }, [loadPokemons, initialData]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const loadMore = useCallback(() => {
-        if (!isFetchingMore && hasMore) {
-            const nextOffset = offset + POKEMON_LIST_LIMIT;
-            setOffset(nextOffset);
-            loadPokemons(nextOffset, true);
-        }
-    }, [isFetchingMore, hasMore, offset, loadPokemons]);
+    const goToPage = useCallback(
+        (page: number) => {
+            if (page < 1 || page > totalPages || page === currentPage || isLoading) return;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            loadPage(page);
+        },
+        [totalPages, currentPage, isLoading, loadPage]
+    );
 
-    return { pokemons, isLoading, isFetchingMore, hasMore, error, loadMore };
+    return {
+        pokemons,
+        isLoading,
+        currentPage,
+        totalPages,
+        totalCount,
+        error,
+        goToPage,
+    };
 }

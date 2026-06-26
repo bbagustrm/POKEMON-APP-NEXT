@@ -12,7 +12,7 @@ interface HomeClientProps {
 }
 
 export function HomeClient({ initialPokemons }: HomeClientProps) {
-    const { pokemons, isLoading, isFetchingMore, hasMore, error, loadMore } =
+    const { pokemons, isLoading, currentPage, totalPages, totalCount, error, goToPage } =
         usePokemonList(initialPokemons);
 
     const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
@@ -27,8 +27,8 @@ export function HomeClient({ initialPokemons }: HomeClientProps) {
                     Pokédex
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
-                    {pokemons.length > 0
-                        ? `${pokemons.length} Pokémon loaded`
+                    {totalCount > 0
+                        ? `${totalCount} Pokémon • Page ${currentPage} of ${totalPages}`
                         : "Loading Pokémon..."}
                 </p>
             </div>
@@ -36,11 +36,11 @@ export function HomeClient({ initialPokemons }: HomeClientProps) {
             <PokemonGrid
                 pokemons={pokemons}
                 isLoading={isLoading}
-                isFetchingMore={isFetchingMore}
-                hasMore={hasMore}
+                currentPage={currentPage}
+                totalPages={totalPages}
                 error={error}
                 onCatch={setSelectedPokemon}
-                onLoadMore={loadMore}
+                onPageChange={goToPage}
             />
 
             {selectedPokemon && (

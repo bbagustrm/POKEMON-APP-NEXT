@@ -1,19 +1,22 @@
 "use client";
 
-import { useRef, useCallback } from "react";
 import { PokemonCard } from "./PokemonCard";
+import { Pagination } from "./Pagination";
 import { ArrowClockwiseIcon } from "@phosphor-icons/react";
 import type { Pokemon } from "@/types/pokemon";
 
 interface PokemonGridProps {
     pokemons: Pokemon[];
     isLoading: boolean;
-    isFetchingMore: boolean;
-    hasMore: boolean;
+    currentPage: number;
+    totalPages: number;
     error: string | null;
     onCatch: (pokemon: Pokemon) => void;
-    onLoadMore: () => void;
+    onPageChange: (page: number) => void;
 }
+
+// Cards considered above-the-fold (2-col mobile = 2 rows = 4 cards)
+const PRIORITY_COUNT = 4;
 
 function SkeletonCard() {
     return (
@@ -34,46 +37,20 @@ function SkeletonCard() {
 export function PokemonGrid({
                                 pokemons,
                                 isLoading,
-                                isFetchingMore,
-                                hasMore,
+                                currentPage,
+                                totalPages,
                                 error,
                                 onCatch,
-                                onLoadMore,
+                                onPageChange,
                             }: PokemonGridProps) {
-    const observerRef = useRef<IntersectionObserver | null>(null);
-
-    const sentinelRef = useCallback(
-        (node: HTMLDivElement | null) => {
-            if (observerRef.current) observerRef.current.disconnect();
-            if (!node) return;
-            observerRef.current = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting && hasMore && !isFetchingMore) {
-                    onLoadMore();
-                }
-            }, { threshold: 0.1 });
-            observerRef.current.observe(node);
-        },
-        [hasMore, isFetchingMore, onLoadMore]
-    );
-
-    if (isLoading) {
-        return (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 px-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                    <SkeletonCard key={i} />
-                ))}
-            </div>
-        );
-    }
-
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <p className="text-gray-500 font-display text-lg">{error}</p>
+                <p className="text-gray-500 font-display text-sm text-center px-4">{error}</p>
                 <button
                     onClick={() => window.location.reload()}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500
-                     text-white text-sm font-semibold font-display hover:bg-red-600 transition"
+                               text-white text-sm font-semibold font-display hover:bg-red-600 transition"
                 >
                     <ArrowClockwiseIcon size={16} weight="bold" />
                     Try again
@@ -84,23 +61,27 @@ export function PokemonGrid({
 
     return (
         <>
+            {/* Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 px-4">
-                {pokemons.map((p) => (
-                    <PokemonCard key={p.id} pokemon={p} onCatch={onCatch} />
-                ))}
-
-                {isFetchingMore &&
-                    Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={`more-${i}`} />)}
+                {isLoading
+                    ? Array.from({ length: 16 }).map((_, i) => <SkeletonCard key={i} />)
+                    : pokemons.map((p, index) => (
+                        <PokemonCard
+                            key={p.id}
+                            pokemon={p}
+                            onCatch={onCatch}
+                            priority={index < PRIORITY_COUNT}
+                        />
+                    ))}
             </div>
 
-            {/* Infinite scroll sentinel */}
-            {hasMore && <div ref={sentinelRef} className="h-8" />}
-
-            {!hasMore && pokemons.length > 0 && (
-                <p className="text-center text-sm text-gray-400 font-display py-8">
-                    All Pokémon loaded!
-                </p>
-            )}
+            {/* Pagination */}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+                isLoading={isLoading}
+            />
         </>
     );
 }
