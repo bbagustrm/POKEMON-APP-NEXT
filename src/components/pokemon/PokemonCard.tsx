@@ -59,7 +59,7 @@ export function PokemonCard({ pokemon, onCatch, priority = false }: PokemonCardP
                     style={{ backgroundColor: colors.border }}
                 />
 
-                <div className="relative p-4 pb-3">
+                <div className="relative p-4 pb-3 h-full flex flex-col justify-between">
                     {/* Type badges + ID */}
                     <div className="flex items-start justify-between mb-1">
                         <div className="flex flex-wrap gap-1">
