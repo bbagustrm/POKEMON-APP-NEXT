@@ -48,12 +48,9 @@ export interface Pokemon {
     base_experience: number;
 }
 
-export interface CaughtPokemon {
-    id: number;
-    name: string;
+// Ganti dengan:
+export interface CaughtPokemon extends Pokemon {
     nickname: string;
-    types: PokemonType[];
-    sprites: PokemonSprites;
     caughtAt: string;
 }
 

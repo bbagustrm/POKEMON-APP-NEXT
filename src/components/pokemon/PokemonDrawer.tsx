@@ -16,12 +16,12 @@ interface PokemonDrawerProps {
 }
 
 const STAT_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    hp:              { label: "HP",       color: "#22c55e", icon: <DropIcon weight="fill" size={12} /> },
-    attack:          { label: "ATK",      color: "#f97316", icon: <LightningIcon weight="fill" size={12} /> },
-    defense:         { label: "DEF",      color: "#3b82f6", icon: <BarbellIcon weight="fill" size={12} /> },
+    hp:                { label: "HP",      color: "#22c55e", icon: <DropIcon weight="fill" size={12} /> },
+    attack:            { label: "ATK",     color: "#f97316", icon: <LightningIcon weight="fill" size={12} /> },
+    defense:           { label: "DEF",     color: "#3b82f6", icon: <BarbellIcon weight="fill" size={12} /> },
     "special-attack":  { label: "Sp.ATK", color: "#a855f7", icon: <StarIcon weight="fill" size={12} /> },
     "special-defense": { label: "Sp.DEF", color: "#06b6d4", icon: <LeafIcon weight="fill" size={12} /> },
-    speed:           { label: "SPD",      color: "#f43f5e", icon: <LightningIcon weight="fill" size={12} /> },
+    speed:             { label: "SPD",     color: "#f43f5e", icon: <LightningIcon weight="fill" size={12} /> },
 };
 
 const TABS = ["About", "Stats", "Moves", "Evolution"] as const;
@@ -89,9 +89,11 @@ function EvolutionCard({ id, name, trigger, minLevel, item }: {
     );
 }
 
-// ─── Tab content as a shared component ─────────────────────────────────────
+// ─── Tab content ────────────────────────────────────────────────────────────
 function TabContent({
-                        activeTab, pokemon, species, evolution, flavorText, genus, colors, totalStats, genderRate, femaleChance, maleChance, catchRate
+                        activeTab, pokemon, species, evolution, flavorText, genus, colors,
+                        totalStats, genderRate, femaleChance, maleChance, catchRate,
+                        stats, abilities, moves,
                     }: {
     activeTab: Tab;
     pokemon: Pokemon;
@@ -105,6 +107,9 @@ function TabContent({
     femaleChance: number | null;
     maleChance: number | null;
     catchRate: number | null;
+    stats: Pokemon["stats"];
+    abilities: Pokemon["abilities"];
+    moves: Pokemon["moves"];
 }) {
     return (
         <>
@@ -116,7 +121,7 @@ function TabContent({
                              style={{ backgroundColor: colors.bg }}>
                             <p className="text-sm leading-relaxed font-display italic"
                                style={{ color: colors.text }}>
-                                "{flavorText}"
+                                &quot;{flavorText}&quot;
                             </p>
                         </div>
                     )}
@@ -127,10 +132,10 @@ function TabContent({
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                { label: "Height", value: `${(pokemon.height / 10).toFixed(1)} m` },
-                                { label: "Weight", value: `${(pokemon.weight / 10).toFixed(1)} kg` },
-                                { label: "Base EXP", value: pokemon.base_experience ?? "—" },
-                                { label: "Capture Rate", value: catchRate !== null ? `${catchRate}%` : "—" },
+                                { label: "Height",        value: `${(pokemon.height / 10).toFixed(1)} m` },
+                                { label: "Weight",        value: `${(pokemon.weight / 10).toFixed(1)} kg` },
+                                { label: "Base EXP",      value: pokemon.base_experience ?? "—" },
+                                { label: "Capture Rate",  value: catchRate !== null ? `${catchRate}%` : "—" },
                             ].map(({ label, value }) => (
                                 <div key={label} className="rounded-2xl p-3 bg-gray-50 border border-gray-100">
                                     <p className="text-[10px] text-gray-400 font-display uppercase tracking-wide mb-1">
@@ -196,7 +201,7 @@ function TabContent({
                             Abilities
                         </h3>
                         <div className="flex flex-col gap-2">
-                            {pokemon.abilities.map((a) => (
+                            {abilities.map((a) => (
                                 <div key={a.ability.name}
                                      className="flex items-center justify-between rounded-2xl px-4 py-3 bg-gray-50 border border-gray-100">
                                     <span className="text-sm font-bold font-display capitalize text-gray-800">
@@ -231,7 +236,7 @@ function TabContent({
             {activeTab === "Stats" && (
                 <div className="p-5 flex flex-col gap-4">
                     <div className="flex flex-col gap-3">
-                        {pokemon.stats.map((s) => (
+                        {stats.map((s) => (
                             <StatBar key={s.stat.name} name={s.stat.name} value={s.base_stat} />
                         ))}
                     </div>
@@ -252,10 +257,10 @@ function TabContent({
             {activeTab === "Moves" && (
                 <div className="p-5">
                     <p className="text-[10px] text-gray-400 font-display uppercase tracking-widest mb-3">
-                        {pokemon.moves.length} moves available
+                        {moves.length} moves available
                     </p>
                     <div className="grid grid-cols-2 gap-2">
-                        {pokemon.moves.slice(0, 40).map((m) => (
+                        {moves.slice(0, 40).map((m) => (
                             <div key={m.move.name}
                                  className="rounded-xl px-3 py-2 bg-gray-50 border border-gray-100">
                                 <span className="text-xs font-semibold font-display capitalize text-gray-700">
@@ -264,9 +269,9 @@ function TabContent({
                             </div>
                         ))}
                     </div>
-                    {pokemon.moves.length > 40 && (
+                    {moves.length > 40 && (
                         <p className="text-center text-xs text-gray-400 font-display mt-4">
-                            +{pokemon.moves.length - 40} more moves
+                            +{moves.length - 40} more moves
                         </p>
                     )}
                 </div>
@@ -324,6 +329,11 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
     const { species, evolution, flavorText, genus, isLoading } = usePokemonDetail(pokemon);
     const drawerRef = useRef<HTMLDivElement>(null);
 
+    // Resolve nickname jika datang dari CaughtPokemon
+    const nickname = (pokemon as any)?.nickname as string | undefined;
+    const displayName = nickname && nickname !== pokemon?.name ? nickname : pokemon?.name ?? "";
+    const speciesName = nickname && nickname !== pokemon?.name ? pokemon?.name : null;
+
     useEffect(() => {
         if (pokemon) {
             requestAnimationFrame(() => setVisible(true));
@@ -350,7 +360,11 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
     const colors = getTypeColor(primaryType);
     const { src: spriteUrl, isAnimated } = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
     const paddedId = String(pokemon.id).padStart(3, "0");
-    const totalStats = pokemon.stats.reduce((a, s) => a + s.base_stat, 0);
+    // Defensive fallback untuk data lama di store yang belum punya field lengkap
+    const stats     = pokemon.stats     ?? [];
+    const abilities = pokemon.abilities ?? [];
+    const moves     = pokemon.moves     ?? [];
+    const totalStats = stats.reduce((a, s) => a + s.base_stat, 0);
     const genderRate = species?.gender_rate ?? -1;
     const femaleChance = genderRate === -1 ? null : (genderRate / 8) * 100;
     const maleChance   = femaleChance === null ? null : 100 - femaleChance;
@@ -359,6 +373,7 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
     const sharedTabContentProps = {
         activeTab, pokemon, species, evolution, flavorText, genus, colors,
         totalStats, genderRate, femaleChance, maleChance, catchRate,
+        stats, abilities, moves,
     };
 
     return (
@@ -370,11 +385,7 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                 onClick={handleClose}
             />
 
-            {/* ══════════════════════════════════════════════════════════
-                DRAWER
-                Mobile  → bottom sheet (translate-y animation)
-                Desktop → right panel with split layout (translate-x animation)
-            ══════════════════════════════════════════════════════════ */}
+            {/* Drawer */}
             <div
                 ref={drawerRef}
                 className={[
@@ -382,7 +393,7 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                     "transition-transform duration-300 ease-out",
                     // Mobile: bottom sheet
                     "bottom-0 left-0 right-0 rounded-t-3xl max-h-[90dvh]",
-                    // Desktop: right panel, full height, fixed width, no bottom rounding
+                    // Desktop: right panel
                     "md:inset-y-0 md:left-auto md:right-0 md:w-[60vw] md:max-w-4xl",
                     "md:rounded-none md:rounded-l-3xl md:flex-row md:max-h-none",
                     // Animation
@@ -392,7 +403,7 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                 ].join(" ")}
             >
 
-                {/* ══ LEFT PANEL — Pokemon image + identity (desktop only) ══ */}
+                {/* ══ LEFT PANEL — desktop only ══ */}
                 <div
                     className="hidden md:flex md:flex-col md:w-2/5 md:shrink-0 relative overflow-hidden"
                     style={{ background: `linear-gradient(160deg, ${colors.border}ee 0%, ${colors.border}88 100%)` }}
@@ -414,18 +425,18 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                         <XIcon size={18} weight="bold" color="white" />
                     </button>
 
-                    {/* Content — centred vertically */}
+                    {/* Content */}
                     <div className="relative flex flex-col items-center justify-center flex-1 px-6 py-10 gap-5">
                         {/* ID */}
                         <p className="text-white/50 text-xs font-display font-bold tracking-widest">
                             #{paddedId}
                         </p>
 
-                        {/* Pokemon sprite */}
+                        {/* Sprite */}
                         <div className="w-32 h-32 flex items-center justify-center">
                             <Image
                                 src={spriteUrl}
-                                alt={pokemon.name}
+                                alt={displayName}
                                 width={176}
                                 height={176}
                                 className="w-44 h-44 object-contain drop-shadow-2xl"
@@ -437,8 +448,14 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                         {/* Name */}
                         <div className="text-center">
                             <h2 className="text-2xl font-bold font-display capitalize text-white tracking-wide leading-tight">
-                                {pokemon.name}
+                                {displayName}
                             </h2>
+                            {/* Species name jika punya nickname */}
+                            {speciesName && (
+                                <p className="text-white/50 text-xs font-display mt-0.5 capitalize">
+                                    {speciesName}
+                                </p>
+                            )}
                             {genus && (
                                 <p className="text-white/60 text-xs font-display mt-1 italic">{genus}</p>
                             )}
@@ -451,7 +468,7 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                             ))}
                         </div>
 
-                        {/* Legendary / Mythical badge */}
+                        {/* Legendary / Mythical */}
                         {(species?.is_legendary || species?.is_mythical) && (
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full
                                             bg-yellow-400/90 text-yellow-900 text-[11px] font-bold font-display">
@@ -460,7 +477,7 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                             </span>
                         )}
 
-                        {/* Quick stat pills at the bottom */}
+                        {/* Quick stat pills */}
                         <div className="w-full mt-4 grid grid-cols-2 gap-2">
                             {[
                                 { label: "Height", value: `${(pokemon.height / 10).toFixed(1)}m` },
@@ -477,10 +494,10 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                     </div>
                 </div>
 
-                {/* ══ RIGHT PANEL — Tabs + Content (desktop) / Full sheet (mobile) ══ */}
+                {/* ══ RIGHT PANEL / Mobile full sheet ══ */}
                 <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
 
-                    {/* ── MOBILE HEADER (hidden on desktop) ── */}
+                    {/* ── MOBILE HEADER ── */}
                     <div
                         className="md:hidden relative pt-6 pb-10 px-5 shrink-0 overflow-hidden"
                         style={{ background: `linear-gradient(135deg, ${colors.border}dd 0%, ${colors.border}99 100%)` }}
@@ -503,11 +520,11 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                             <XIcon size={18} weight="bold" color="white" />
                         </button>
 
-                        {/* Pokemon image */}
+                        {/* Sprite */}
                         <div className="flex justify-center mb-3 mt-2">
                             <Image
                                 src={spriteUrl}
-                                alt={pokemon.name}
+                                alt={displayName}
                                 width={140}
                                 height={140}
                                 className="w-36 h-36 object-contain drop-shadow-xl"
@@ -519,9 +536,15 @@ export function PokemonDrawer({ pokemon, onClose }: PokemonDrawerProps) {
                         {/* Name & ID */}
                         <div className="text-center">
                             <p className="text-white/60 text-xs font-display font-medium mb-1">#{paddedId}</p>
-                            <h2 className="text-2xl font-bold font-display capitalize text-white tracking-wide mb-2">
-                                {pokemon.name}
+                            <h2 className="text-2xl font-bold font-display capitalize text-white tracking-wide mb-1">
+                                {displayName}
                             </h2>
+                            {/* Species name jika punya nickname */}
+                            {speciesName && (
+                                <p className="text-white/60 text-xs font-display mb-1 capitalize">
+                                    {speciesName}
+                                </p>
+                            )}
                             {genus && (
                                 <p className="text-white/70 text-xs font-display mb-2 italic">{genus}</p>
                             )}
