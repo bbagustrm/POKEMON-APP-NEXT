@@ -9,7 +9,7 @@ export function PokemonTypeBadge({ type, size = "md" }: PokemonTypeBadgeProps) {
     const colors = getTypeColor(type);
 
     const sizeClass = size === "sm"
-        ? "text-[8px] md:text-[10px] px-2 py-0.5"
+        ? "text-[10px] px-2 py-0.5"
         : "text-xs px-3 py-1";
 
     return (
