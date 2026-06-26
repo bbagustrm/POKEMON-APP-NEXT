@@ -291,8 +291,8 @@ export function CatchModal({ pokemon, onClose }: CatchModalProps) {
                                     />
                                 </div>
                             </div>
-                            <p className="text-[#FFCB05] font-display font-bold text-lg animate-shake-success">
-                                ✨ Successfully caught! ✨
+                            <p className="text-[#FFCB05] font-display font-bold animate-shake-success text-center">
+                                ✨Successfully caught!✨
                             </p>
                         </div>
                     )}

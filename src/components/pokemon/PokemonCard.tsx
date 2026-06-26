@@ -137,7 +137,7 @@ export function PokemonCard({ pokemon, onCatch, priority = false }: PokemonCardP
                             <>
                                 <button
                                     disabled
-                                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2
+                                    className="hidden md:flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2
                                                text-xs font-semibold font-display opacity-60 cursor-not-allowed"
                                     style={{ backgroundColor: colors.border, color: "#fff" }}
                                 >
