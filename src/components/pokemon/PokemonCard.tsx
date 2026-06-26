@@ -136,17 +136,8 @@ export function PokemonCard({ pokemon, onCatch, priority = false }: PokemonCardP
                         {isCaught ? (
                             <>
                                 <button
-                                    disabled
-                                    className="hidden md:flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2
-                                               text-xs font-semibold font-display opacity-60 cursor-not-allowed"
-                                    style={{ backgroundColor: colors.border, color: "#fff" }}
-                                >
-                                    <CheckCircleIcon weight="fill" size={15} />
-                                    Caught!
-                                </button>
-                                <button
                                     onClick={() => router.push("/collection")}
-                                    className="flex items-center justify-center gap-1 rounded-xl py-2 px-3
+                                    className="flex flex-1 items-center justify-center gap-1 rounded-xl py-2 px-3
                                                text-xs font-semibold font-display border transition-colors"
                                     style={{
                                         borderColor: colors.border,
