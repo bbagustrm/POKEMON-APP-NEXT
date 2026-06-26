@@ -4,6 +4,7 @@ import { XIcon, WarningIcon } from "@phosphor-icons/react";
 import { PokeballIcon } from "@/components/icons/PokeballIcon";
 import type { CaughtPokemon } from "@/types/pokemon";
 import Image from "next/image";
+import { getPokemonSpriteUrl } from "@/services/pokeApi";
 
 interface ReleaseDialogProps {
     pokemon: CaughtPokemon;
@@ -12,10 +13,7 @@ interface ReleaseDialogProps {
 }
 
 export function ReleaseDialog({ pokemon, onConfirm, onCancel }: ReleaseDialogProps) {
-    const imageUrl =
-        pokemon.sprites.other["official-artwork"].front_default ??
-        pokemon.sprites.front_default ??
-        "";
+    const { src: spriteUrl, isAnimated } = getPokemonSpriteUrl(pokemon.id, pokemon.sprites);
 
     return (
         <div
@@ -37,13 +35,17 @@ export function ReleaseDialog({ pokemon, onConfirm, onCancel }: ReleaseDialogPro
                         <PokeballIcon size={120} color="white" />
                     </div>
 
-                    <div className="relative w-28 h-28 drop-shadow-xl">
+                    <div className="relative w-36 h-36 flex items-center justify-center drop-shadow-xl">
                         <Image
-                            src={imageUrl}
+                            src={spriteUrl}
                             alt={pokemon.nickname}
-                            fill
-                            className="object-contain opacity-80"
-                            sizes="112px"
+                            width={144}
+                            height={144}
+                            className="object-contain"
+                            style={{
+                                imageRendering: isAnimated ? "pixelated" : "auto",
+                            }}
+                            unoptimized={isAnimated}
                         />
                     </div>
                 </div>
@@ -69,8 +71,8 @@ export function ReleaseDialog({ pokemon, onConfirm, onCancel }: ReleaseDialogPro
                     <p className="text-center text-sm text-gray-500 mb-5 leading-relaxed">
                         Are you sure you want to release{" "}
                         <span className="font-semibold capitalize text-[#1A1A2E]">
-              {pokemon.nickname}
-            </span>
+                            {pokemon.nickname}
+                        </span>
                         ? This Pokémon will be gone forever.
                     </p>
 
@@ -78,14 +80,14 @@ export function ReleaseDialog({ pokemon, onConfirm, onCancel }: ReleaseDialogPro
                         <button
                             onClick={onCancel}
                             className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold
-                         font-display text-gray-600 hover:bg-gray-50 active:scale-95 transition-all"
+                                       font-display text-gray-600 hover:bg-gray-50 active:scale-95 transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={onConfirm}
                             className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white
-                         text-sm font-semibold font-display active:scale-95 transition-all shadow-sm"
+                                       text-sm font-semibold font-display active:scale-95 transition-all shadow-sm"
                         >
                             Yes, Release
                         </button>

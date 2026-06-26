@@ -87,8 +87,8 @@ export function CollectionCard({ pokemon }: CollectionCardProps) {
                         <Image
                             src={staticSpriteUrl}
                             alt={pokemon.nickname}
-                            width={96}
-                            height={96}
+                            width={112}
+                            height={112}
                             className={[
                                 "object-contain drop-shadow-md absolute",
                                 "transition-all duration-200",
@@ -106,8 +106,8 @@ export function CollectionCard({ pokemon }: CollectionCardProps) {
                                 src={animatedSpriteUrl}
                                 alt=""
                                 aria-hidden="true"
-                                width={96}
-                                height={96}
+                                width={112}
+                                height={112}
                                 className="object-contain drop-shadow-md absolute
                                            opacity-0 group-hover:opacity-100 group-hover:scale-110
                                            transition-all duration-200"

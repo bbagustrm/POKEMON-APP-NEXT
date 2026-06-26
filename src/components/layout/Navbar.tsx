@@ -26,7 +26,7 @@ export function Navbar() {
             <header className="hidden md:flex items-center justify-between px-6 py-3
                          bg-[#E3350D] shadow-md sticky top-0 z-40">
                 <Link href="/" className="flex items-center gap-2 text-white font-display font-bold text-xl tracking-wide">
-                    <PokeballIcon size={24} color="white" />
+                    <PokeballIcon size={24} color="red" />
                     PokéDex
                 </Link>
                 <nav className="flex gap-2">
