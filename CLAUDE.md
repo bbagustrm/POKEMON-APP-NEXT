@@ -7,30 +7,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # Start dev server (http://localhost:3000)
-npm run build    # Production build
-npm run start    # Start production server
+# Development (use bun as package manager)
+bun install      # Install dependencies
+bun run dev      # Start dev server (http://localhost:3000)
+bun run build    # Production build (static export to /out)
+
+# Docker deployment (static export via nginx)
+docker build -t pokemon-app .
+docker run -p 80:80 pokemon-app
 ```
 
-No test or lint scripts are configured. The project uses **bun** as its package manager (see `bun.lock`).
+No test or lint scripts are configured. npm scripts are defined but **bun** is the package manager (see `bun.lockb`).
 
 ## Architecture
 
 A Pokédex web app built with **Next.js 16 App Router**, **React 19**, and **Redux Toolkit**. Data comes from the [PokeAPI](https://pokeapi.co).
 
+**Build mode**: Static export (`output: 'export'` in next.config.ts) — all pages are pre-rendered at build time to static HTML in `/out`. No server-side runtime.
+
 ### Routing (Next.js App Router)
 
 | Route | File | Strategy |
 |---|---|---|
-| `/` | `src/app/page.tsx` | Server Component — SSR-fetches the first page of Pokémon, passes to `HomeClient` |
+| `/` | `src/app/page.tsx` | Server Component — pre-fetches first page of Pokémon at build time, passes to `HomeClient` |
 | `/collection` | `src/app/collection/page.tsx` | Client Component — reads from Redux store |
 
 `layout.tsx` sets up metadata (OG, title template), fonts (Pixelify Sans + Press Start 2P), and wraps children in `<Providers>` (Redux `Provider`). Every page uses the `Navbar` component.
 
 ### Data flow
 
-1. **Initial load**: `page.tsx` (server) calls `fetchPokemonList` + `fetchPokemonDetail` for the first page, passes results as `initialPokemons` to `<HomeClient>`.
-2. **Client-side pagination**: `usePokemonList` hook manages page state — calls `loadPage(page)` which fetches the list then all details in parallel.
+1. **Build-time pre-render**: `page.tsx` server component calls `fetchPokemonList` + `fetchPokemonDetail` for the first page during build, passes results as `initialPokemons` to `<HomeClient>`.
+2. **Client-side pagination**: `usePokemonList` hook manages page state — calls `loadPage(page)` which fetches the list then all details in parallel from PokeAPI.
 3. **Detail drawer**: Clicking a card opens `PokemonDrawer` → `usePokemonDetail` hook fetches species + evolution chain from PokeAPI.
 4. **Collection**: `collectionSlice` (Redux Toolkit) stores `CaughtPokemon[]`, synced to `localStorage` under the key `pokemon_collection`. Catch/Release dispatch actions that write to both Redux and localStorage.
 
@@ -77,12 +84,21 @@ Cards show a static official artwork by default. On hover, the static sprite fad
 ### Key constants (`src/constants/index.ts`)
 
 - `POKEAPI_BASE_URL` — defaults to `https://pokeapi.co/api/v2`, overridable via `NEXT_PUBLIC_POKEAPI_BASE_URL`
-- `POKEMON_LIST_LIMIT` — 20 (SSR), client hook overrides to 16
+- `POKEMON_LIST_LIMIT` — 20 (build-time pre-render), client hook overrides to 16
 - `LOCAL_STORAGE_KEY` — `"pokemon_collection"`
+
+## Deployment
+
+Multi-stage Docker build for production:
+1. **Builder stage** (bun:alpine): installs deps, runs `bun run build` → static export to `/app/out`
+2. **Runner stage** (nginx:alpine): serves static files from `/usr/share/nginx/html`
+
+`nginx.conf` provides gzip compression, security headers, long-lived cache for `_next/static/` (1 year), short cache for images (30 days), and SPA fallback routing (`try_files $uri /index.html`).
 
 ## Notable patterns
 
-- **Hydration safety**: `isCaught` checks and badge counts are deferred with `useState(false)` + `useEffect` to avoid SSR/client mismatches (Redux state only exists client-side).
+- **Hydration safety**: `isCaught` checks and badge counts are deferred with `useState(false)` + `useEffect` to avoid build-time/client mismatches (Redux state only exists client-side, not at build time).
 - **Stop propagation**: Action buttons inside cards use `onClick={(e) => e.stopPropagation()}` to prevent triggering the card's drawer.
 - **`CaughtPokemon` extends `Pokemon`** with `nickname` and `caughtAt`. However `CatchModal.handleSave()` explicitly sets fields like `stats: []`, `abilities: []`, etc. because the store uses the full `Pokemon` interface — old entries without those fields would cause undefined access in the drawer.
+- **Static export limitations**: No server runtime means no API routes, no server actions, no dynamic SSR, and `unoptimized: true` required for external images. All data fetching happens either at build time (server components) or client-side (hooks).
 - **Next.js 16**: The AGENTS.md warns about breaking changes in this version; before writing Next.js-specific code, consult the docs in `node_modules/next/dist/docs/`.

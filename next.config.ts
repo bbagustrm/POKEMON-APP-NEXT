@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+    output: 'export',
     headers: async () => [
         {
             source: "/(.*)",
             headers: [{ key: "X-Robots-Tag", value: "index, follow" }],
         },
     ],
-images: {
+    images: {
         remotePatterns: [
             {
                 protocol: "https",
@@ -20,6 +21,7 @@ images: {
                 pathname: "/**",
             },
         ],
+        unoptimized: true,
     },
 };
 
